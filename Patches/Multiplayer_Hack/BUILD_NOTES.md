@@ -12,11 +12,15 @@ bass embeds the original ROM via `insert` and overwrites specific regions.
 
 ## Verified working procedure
 
-1. **Assembler: bass v14** (NOT v18 — see note below).
+1. **Assembler: bass v14, with a one-line patch** (NOT v18 — see notes below).
 
    ```
    git clone --depth 1 --branch v14 https://github.com/ARM9/bass.git
-   cd bass/bass && make          # binary is ./bass
+   cd bass/bass
+   # REQUIRED patch: make the `dd` directive emit 4 bytes, not 8 (see note).
+   # In core/core.hpp, the EmitBytes table: change `{"dq ", 8}` to `{"dq ", 4}`.
+   sed -i 's/{"dq ", 8}/{"dq ", 4}/' core/core.hpp
+   make                          # binary is ./bass
    ```
 
 2. **Clean ROM** at `Patches/LIB/Mario Kart 64 (U) [!].z64`
@@ -30,7 +34,42 @@ bass embeds the original ROM via `insert` and overwrites specific regions.
 
    Produces a 12 MB (`0xC00000`) Z64 with header `80 37 12 40`.
 
-On this machine bass v14 is built at `/home/brian/code/bass-v14/bass/bass`.
+4. **Fix the N64 checksum** (REQUIRED — see note below):
+
+   ```
+   python3 ../Tools/n64crc.py "../LIB/Mario Kart 64 (U) [!].z64" mk64_hack.z64
+   ```
+
+On this machine bass v14 is built (with the patch) at
+`/home/brian/code/bass-v14/bass/bass`.
+
+## IMPORTANT: the `dd` directive must emit 4 bytes
+
+The source uses `dd` ~131 times for 32-bit values — menu-table counts and
+pointers (`dd 0x00000002`, `dd MenuEntry1`, ...) and character stats — and the
+code reads them with a 4-byte stride (`lw t2, 0x04(t0)`). The author's
+assembler treated `dd` as a 4-byte word.
+
+bass v14's mipseb arch table (`arch/table/mipseb/directives.md`) maps `dd` to
+the 8-byte emit slot, so an unpatched v14 builds every menu pointer as
+`00 00 00 00 xx xx xx xx`. A 32-bit read then returns `0` (a null) for every
+count and pointer — the title menu dereferences garbage and hangs on a white
+screen *after* the Nintendo logo (the boot/logo still work; input still
+responds). The `core.hpp` patch above changes that slot to 4 bytes, which is
+also bass's own core default. (We can't just remap `dd` to the existing 4-byte
+slot in the arch table — that slot belongs to `dw`, and aliasing them breaks
+`dw`.) Verify after building: the `MenuStrings` table should read
+`00 00 00 02  80 00 .. ..  ...` with a 4-byte stride.
+
+## IMPORTANT: the checksum MUST be recalculated after building
+
+The patch overwrites code inside the boot-checked region (`0x1000`–`0x101000`;
+e.g. the asm's `origin 0x001E6C` / `0x0029F0`). That invalidates the ROM's
+header CRC (bytes `0x10`–`0x17`). On boot the IPL3/CIC checksum handshake then
+fails and the bootcode spins forever — Project64 reports *"in a permanent loop
+that cannot be exited."* The original Windows `asm.cmd` ran a CRC fixer after
+bass; we replicate that with `Patches/Tools/n64crc.py` (CIC-6102 algorithm,
+self-validated against the clean ROM's known-good CRC before writing).
 
 ## IMPORTANT: use bass v14, not v18
 
