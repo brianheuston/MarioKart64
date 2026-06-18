@@ -42,7 +42,7 @@ constant SetTextColor(0x800930D8)
 //   04 = Transition
 //   05 = Transition
 
-constant PrintText2 (0x80093788)
+constant PrintText2(0x80093788)
 // a0 = Pointer to X coordinate
 // a1 = Pointer to Y coordinate
 // a2 = Pointer to string

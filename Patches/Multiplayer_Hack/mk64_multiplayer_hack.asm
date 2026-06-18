@@ -2,12 +2,12 @@ arch n64.cpu
 endian msb
 //output "", create
 
-include "..\LIB\N64.inc"
-include "..\LIB\functions.inc"
-include "..\LIB\macros.inc"
+include "../LIB/N64.INC"
+include "../LIB/functions.inc"
+include "../LIB/macros.inc"
 
 origin 0x0
-insert "..\LIB\Mario Kart 64 (U) [!].z64"
+insert "../LIB/Mario Kart 64 (U) [!].z64"
 
 constant ModeSelection(0x800DC53C)
 constant CourseSelection1(0x800DC5A0)

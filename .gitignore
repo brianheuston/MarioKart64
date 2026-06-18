@@ -1,0 +1,4 @@
+# ROM images — never commit (copyrighted): clean base ROM and built output
+*.z64
+*.n64
+*.v64
