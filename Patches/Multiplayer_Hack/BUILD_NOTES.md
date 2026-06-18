@@ -10,6 +10,15 @@ for the [`bass`](https://github.com/ARM9/bass) assembler (byuu's assembler,
 ARM9's N64 fork). You "apply" it by **assembling it against a clean ROM** —
 bass embeds the original ROM via `insert` and overwrites specific regions.
 
+## Quick build
+
+Once a patched bass v14 exists (step 1 below), `build.py` runs the assemble +
+checksum steps in one go, on Windows or Linux:
+
+```
+python build.py --bass /path/to/bass        # or set $BASS / put bass on PATH
+```
+
 ## Verified working procedure
 
 1. **Assembler: bass v14, with a one-line patch** (NOT v18 — see notes below).
